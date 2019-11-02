@@ -77,6 +77,20 @@ impl<'ctx> FuncDecl<'ctx> {
             )
         })
     }
+
+    pub fn kind(&self) -> DeclKind {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            Z3_get_decl_kind(self.ctx.z3_ctx, self.z3_func_decl)
+        }
+    }
+
+    pub fn symbol(&self) -> Symbol {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            Symbol::new(self.ctx, Z3_get_decl_name(self.ctx.z3_ctx, self.z3_func_decl))
+        }
+    }
 }
 
 impl<'ctx> fmt::Display for FuncDecl<'ctx> {

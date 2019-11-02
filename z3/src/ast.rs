@@ -5,6 +5,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use z3_sys::*;
 use Context;
+use FuncDecl;
 use Pattern;
 use Sort;
 use Symbol;
@@ -214,6 +215,52 @@ pub trait Ast<'ctx>: Sized + fmt::Debug {
                 tos.as_ptr(),
             )
         })
+    }
+
+    fn kind(&self) -> AstKind {
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            Z3_get_ast_kind(self.get_ctx().z3_ctx, self.get_z3_ast())
+        }
+    }
+
+    fn num_args(&self) -> u32 {
+        assert!(self.is_app(), "expected Z3 application");
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            Z3_get_app_num_args(self.get_ctx().z3_ctx, self.get_z3_ast() as Z3_app)
+        }
+    }
+
+    fn arg(&self, idx: u32) -> Dynamic<'ctx> {
+        assert!(self.is_app(), "expected Z3 application");
+        assert!(idx < self.num_args(), "invalid argument index");
+        unsafe {
+            let guard = Z3_MUTEX.lock().unwrap();
+            Dynamic::new(
+                self.get_ctx(),
+                Z3_get_app_arg(self.get_ctx().z3_ctx, self.get_z3_ast() as Z3_app, idx),
+            )
+        }
+    }
+
+    fn decl(&self) -> FuncDecl<'ctx> {
+        assert!(self.is_app(), "expected Z3 application");
+        unsafe {
+            FuncDecl::from_raw(
+                self.get_ctx(),
+                Z3_get_app_decl(self.get_ctx().z3_ctx, self.get_z3_ast() as Z3_app),
+            )
+        }
+    }
+
+    fn is_app(&self) -> bool {
+        let kind = self.kind();
+        kind == AstKind::Numeral || kind == AstKind::App
+    }
+
+    fn is_const(&self) -> bool {
+        self.is_app() && self.num_args() == 0
     }
 }
 
