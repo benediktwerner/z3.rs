@@ -235,13 +235,11 @@ pub trait Ast<'ctx>: Sized + fmt::Debug {
     fn arg(&self, idx: u32) -> Dynamic<'ctx> {
         assert!(self.is_app(), "expected Z3 application");
         assert!(idx < self.num_args(), "invalid argument index");
-        unsafe {
+
+        Dynamic::new(self.get_ctx(), unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            Dynamic::new(
-                self.get_ctx(),
-                Z3_get_app_arg(self.get_ctx().z3_ctx, self.get_z3_ast() as Z3_app, idx),
-            )
-        }
+            Z3_get_app_arg(self.get_ctx().z3_ctx, self.get_z3_ast() as Z3_app, idx)
+        })
     }
 
     fn decl(&self) -> FuncDecl<'ctx> {
