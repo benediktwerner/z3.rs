@@ -86,10 +86,11 @@ impl<'ctx> FuncDecl<'ctx> {
     }
 
     pub fn symbol(&self) -> Symbol {
-        unsafe {
+        let symbol = unsafe {
             let guard = Z3_MUTEX.lock().unwrap();
-            Symbol::new(self.ctx, Z3_get_decl_name(self.ctx.z3_ctx, self.z3_func_decl))
-        }
+            Z3_get_decl_name(self.ctx.z3_ctx, self.z3_func_decl)
+        };
+        Symbol::new(self.ctx, symbol)
     }
 }
 
